@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<extension key="nbrmigration" type="module">
+  <file>nbrmigration</file>
+  <name>NIHR BioResource Migration</name>
+  <description>CiviCRM specific extension fior NIHR BioResource migration (to be uninstalled after migration)</description>
+  <license>AGPL-3.0</license>
+  <maintainer>
+    <author>Erik Hommel (CiviCooP)</author>
+    <email>erik.hommel@civicoop.org</email>
+  </maintainer>
+  <urls>
+    <url desc="Main Extension Page">https://lab.civicrm.org/partners/civicoop/nihr-bioresearch/nbrmigration</url>
+    <url desc="Documentation">https://lab.civicrm.org/partners/civicoop/nihr-bioresearch/nbrmigration</url>
+    <url desc="Support">https://civicoop.org</url>
+    <url desc="Licensing">http://www.gnu.org/licenses/agpl-3.0.html</url>
+  </urls>
+  <classloader>
+    <psr4 prefix="Civi\" path="Civi" />
+  </classloader>
+  <requires>
+    <ext>nihrbackbone</ext>
+  </requires>
+  <releaseDate>2020-06-30</releaseDate>
+  <version>1.0</version>
+  <develStage>alpha</develStage>
+  <compatibility>
+    <ver>4.7</ver>
+  </compatibility>
+  <comments>This is a new, undeveloped module</comments>
+  <civix>
+    <namespace>CRM/Nbrmigration</namespace>
+  </civix>
+</extension>
