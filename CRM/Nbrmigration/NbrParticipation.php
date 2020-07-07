@@ -33,6 +33,7 @@ class CRM_Nbrmigration_NbrParticipation {
     $this->_studyParticipationStatusCustomField = "custom_" . CRM_Nihrbackbone_BackboneConfig::singleton()->getParticipationCustomField('nvpd_study_participation_status', 'id');
     $this->_dateInvitedCustomField = "custom_" . CRM_Nihrbackbone_BackboneConfig::singleton()->getParticipationCustomField('nvpd_date_invited', 'id');
     $this->_recallGroupCustomField = "custom_" . CRM_Nihrbackbone_BackboneConfig::singleton()->getParticipationCustomField('nvpd_recall_group', 'id');
+    $this->sentToResearcherActTypeId = CRM_Nihrbackbone_BackboneConfig::singleton()->getExportExternalActivityTypeId();
   }
 
   /**
@@ -58,9 +59,13 @@ class CRM_Nbrmigration_NbrParticipation {
       }
       // create case with custom data
       try {
-        // todo check what happens to the post hook! and if contact identifier already created
-        civicrm_api3('Case', 'create', $this->prepareParticipationData($contactId, $studyId, $sourceData));
-        // todo add sent to researcher activity if required
+        $createdCase = civicrm_api3('Case', 'create', $this->prepareParticipationData($contactId, $studyId, $sourceData));
+        // add sent to researcher activity if required
+        if (!empty($sourceData->sent_to_researcher)) {
+          $this->createSentToResearcher($createdCase['id'], $sourceData->sent_to_researcher);
+        }
+        // todo add change status to accepted activity if required
+        // todo add note activity if required
         // todo add study participant id as contact identifier
       }
       catch (CiviCRM_API3_Exception $ex) {
@@ -68,6 +73,11 @@ class CRM_Nbrmigration_NbrParticipation {
         return FALSE;
       }
     }
+  }
+  public function createSentToResearcher($caseId, $dateSent) {
+    $dateSent = new DateTime($dateSent);
+
+
   }
 
   /**
@@ -82,6 +92,8 @@ class CRM_Nbrmigration_NbrParticipation {
     $result = [
       'contact_id' => $contactId,
       'case_type_id' => $this->_participationCaseTypeId,
+      'subject' => "Selected for study " . $sourceData->study_number,
+      'status_id' => "Open",
       $this->_studyIdCustomField => $studyId,
       $this->_studyParticipationStatusCustomField => $this->transformStatus($sourceData->status),
     ];
@@ -96,6 +108,58 @@ class CRM_Nbrmigration_NbrParticipation {
       $result[$this->_recallGroupCustomField] = $sourceData->recall_group;
     }
     return $result;
+  }
+
+  /**
+   * Method to transform the source status to the civicrm study participation status
+   *
+   * @param $sourceStatus
+   * @return mixed
+   */
+  private function transformStatus($sourceStatus) {
+    $sourceStatus = strtolower(trim($sourceStatus));
+    switch ($sourceStatus) {
+      case "accepted":
+        return $this->_acceptedStatus;
+        break;
+      case "excluded":
+        return $this->_excludedStatus;
+        break;
+      case "invitation pending":
+        return $this->_invitationPendingStatus;
+        break;
+      case "invited":
+        return $this->_invitedStatus;
+        break;
+      case "no response":
+        return $this->_noResponseStatus;
+        break;
+      case "not participated":
+        return $this->_notParticipatedStatus;
+        break;
+      case "participated":
+        return $this->_participatedStatus;
+        break;
+      case "refused":
+        return $this->_refusedStatus;
+        break;
+      case "reneged":
+        return $this->_renegedStatus;
+        break;
+      case "return to sender":
+        return $this->_returnToSenderStatus;
+        break;
+      case "selected":
+        return $this->_selectedStatus;
+        break;
+      case "withdrawn":
+        return $this->_withdrawnStatus;
+        break;
+      default:
+        $this->_logger->logMessage("Status " . $sourceStatus . " is not valid, status Selected used.", "warning");
+        return $this->_selectedStatus;
+        break;
+    }
   }
 
   /**
