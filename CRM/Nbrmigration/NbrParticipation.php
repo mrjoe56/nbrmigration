@@ -36,6 +36,7 @@ class CRM_Nbrmigration_NbrParticipation {
     $this->sentToResearcherActTypeId = CRM_Nihrbackbone_BackboneConfig::singleton()->getExportExternalActivityTypeId();
     $this->changeStatusActTypeId = CRM_Nihrbackbone_BackboneConfig::singleton()->getChangedStudyStatusActivityTypeId();
     $this->meetingActTypeId = Civi::service('nbrBackbone')->getMeetingActivityTypeId();
+    $this->normalPriorityId = Civi::service('nbrBackbone')->getNormalPriorityId();
   }
 
   /**
@@ -114,7 +115,8 @@ class CRM_Nbrmigration_NbrParticipation {
       'target_contact_id' => $contactId,
       'status_id' => "Completed",
       'subject' => "Note from Starfish (imported during migration)",
-      'details' => CRM_Core_DAO::escapeString(strip_tags($sourceData->project_participation_notes)),
+      'priority_id' => $this->normalPriorityId,
+      'details' => CRM_Core_DAO::escapeString($sourceData->project_participation_notes),
     ];
   }
 
@@ -136,6 +138,7 @@ class CRM_Nbrmigration_NbrParticipation {
       'target_contact_id' => $contactId,
       'status_id' => "Completed",
       'subject' => "Exported to External Researcher(s) (imported during migration)",
+      'priority_id' => $this->normalPriorityId,
     ];
   }
 
@@ -156,6 +159,7 @@ class CRM_Nbrmigration_NbrParticipation {
       'case_id' => $caseId,
       'target_contact_id' => $contactId,
       'status_id' => "Completed",
+      'priority_id' => $this->normalPriorityId,
       'subject' => "Changed from status Invited to status Accepted (imported during migration)",
     ];
 
