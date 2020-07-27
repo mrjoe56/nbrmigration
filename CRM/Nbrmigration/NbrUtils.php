@@ -89,4 +89,36 @@ class CRM_Nbrmigration_NbrUtils {
     }
     return FALSE;
   }
+
+  /**
+   * Get participation case id for contact (there should only be one but the latest active one will be selected)
+   *
+   * @param $studyId
+   * @param $contactId
+   * @return bool|string
+   */
+  public static function getParticipationCaseId($studyId, $contactId) {
+    if (empty($contactId) || empty($studyId)) {
+      return FALSE;
+    }
+    $table = CRM_Nihrbackbone_BackboneConfig::singleton()->getParticipationDataCustomGroup('table_name');
+    $studyIdColumn = CRM_Nihrbackbone_BackboneConfig::singleton()->getParticipationCustomField('nvpd_study_id', 'column_name');
+    $query = "SELECT ccc.case_id
+        FROM civicrm_case AS cc
+        JOIN civicrm_case_contact AS ccc ON cc.id = ccc.case_id
+        LEFT JOIN " . $table . " AS cvnpd ON cc.id = cvnpd.entity_id
+        WHERE cc.is_deleted = %1 AND ccc.contact_id = %2 AND cc.case_type_id = %3 AND cvnpd." . $studyIdColumn . " = %4
+        ORDER BY cc.id DESC LIMIT 1";
+    $queryParams = [
+      1 => [0, "Integer"],
+      2 => [(int) $contactId, "Integer"],
+      3 => [(int) CRM_Nihrbackbone_BackboneConfig::singleton()->getParticipationCaseTypeId(), "Integer"],
+      4 => [(int) $studyId, "Integer"],
+    ];
+    $caseId = CRM_Core_DAO::singleValueQuery($query, $queryParams);
+    if ($caseId) {
+      return $caseId;
+    }
+    return FALSE;
+  }
 }

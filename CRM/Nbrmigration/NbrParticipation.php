@@ -192,7 +192,7 @@ class CRM_Nbrmigration_NbrParticipation {
         return TRUE;
       }
       catch (CiviCRM_API3_Exception $ex) {
-        $this->logger->logMesagge("Could not create invite activity with data " . json_encode($activityData)
+        $this->logger->logMessage("Could not create participation case activity with data " . json_encode($activityData)
           . ", error from API Activity create: " . $ex->getMessage());
       }
     }

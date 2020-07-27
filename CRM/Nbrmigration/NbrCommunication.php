@@ -39,7 +39,7 @@ class CRM_Nbrmigration_NbrCommunication {
    * @return bool
    */
   public function migrate($sourceData) {
-    if ($this->isDataValid()) {
+    if ($this->isDataValid($sourceData)) {
       // first find contact id with sample_id, log if none found
       $contactId = CRM_Nbrmigration_NbrUtils::getContactIdWithSampleId($sourceData->participant_id);
       if (!$contactId) {
@@ -50,18 +50,12 @@ class CRM_Nbrmigration_NbrCommunication {
       switch ($sourceData->communication_type) {
         // recruitment
         case 1:
-          // find study, log if none found
-          $studyId = CRM_Nbrmigration_NbrUtils::getStudyIdWithStudyNumber($sourceData->study_number);
-          if (!$studyId) {
-            $this->logger->logMessage('No study found with study_number: ' . $sourceData->study_number, 'error');
-            return FALSE;
-          }
           $caseId = CRM_Nbrmigration_NbrUtils::getRecruitmentCaseId($contactId);
           if (!$caseId) {
             $this->logger->logMessage('No recruitment case for contact_id: ' . $contactId . ', communication not migrated.', 'error');
             return FALSE;
           }
-          $this->createActivity($this->prepareCaseActivityData($contactId, $caseId, $studyId, $sourceData));
+          $this->createActivity($this->prepareCaseActivityData($contactId, $caseId, $sourceData));
           break;
 
         // participation
@@ -74,10 +68,10 @@ class CRM_Nbrmigration_NbrCommunication {
           }
           $caseId = CRM_Nbrmigration_NbrUtils::getParticipationCaseId($studyId, $contactId);
           if (!$caseId) {
-            $this->logger->logMessage('No participation case for contact_id: ' . $contactId . 'and study_id: ' . $studyId . ', communication not migrated.', 'error');
+            $this->logger->logMessage('No participation case for contact_id: ' . $contactId . ' and study_id: ' . $studyId . ', communication not migrated.', 'error');
             return FALSE;
           }
-          $this->createActivity($this->prepareCaseActivityData($contactId, $caseId, $studyId, $sourceData));
+          $this->createActivity($this->prepareCaseActivityData($contactId, $caseId, $sourceData));
           break;
         default:
           $this->createActivity($this->prepareActivityData($contactId, $sourceData));
@@ -177,12 +171,11 @@ class CRM_Nbrmigration_NbrCommunication {
    *
    * @param $contactId
    * @param $caseId
-   * @param $studyId
    * @param $sourceData
    * @return array
    */
-  private function prepareCaseActivityData($contactId, $caseId, $studyId, $sourceData) {
-    $sourceDate = $sourceData->communication_date . " " . $sourceDate->communication_time;
+  private function prepareCaseActivityData($contactId, $caseId, $sourceData) {
+    $sourceDate = $sourceData->communication_date . " " . $sourceData->communication_time;
     $activityDate = new DateTime($sourceDate);
     $activityData = [
       'source_contact_id' => 'user_contact_id',
@@ -193,13 +186,21 @@ class CRM_Nbrmigration_NbrCommunication {
       'activity_type_id' => $this->determineActivityType($sourceData),
       'subject' => $sourceData->template_name . " (migration)",
       'status_id' => $this->determineStatus($sourceData->status),
-      'activity_date_time' => $activityDate->format("YmdhIs"),
+      'activity_date_time' => $activityDate->format("Y-m-d H:i:s"),
     ];
     if (!empty($sourceData->contact_detail)) {
       $activityData['location'] = $sourceData->contact_detail;
     }
-    if (!empty($sourceDate->communication_notes)) {
-      $activityData['details'] = CRM_Core_DAO::escapeString($sourceDate->communication_notes);
+    if (!empty($sourceData->communication_category)) {
+      $activityData['details'] = "<strong>Communication category:</strong> " . $sourceData->communication_category;
+    }
+    if (!empty($sourceData->communication_notes)) {
+      if (!$activityData['details']) {
+        $activityData['details'] = "<strong>Communication note:</strong> " . CRM_Core_DAO::escapeString($sourceData->communication_notes);
+      }
+      else {
+        $activityData['details'] .= "\r\n <strong>Communication note:</strong> " . CRM_Core_DAO::escapeString($sourceData->communication_notes);
+      }
     }
     return $activityData;
   }
@@ -212,7 +213,7 @@ class CRM_Nbrmigration_NbrCommunication {
    * @return array
    */
   private function prepareActivityData($contactId, $sourceData) {
-    $sourceDate = $sourceData->communication_date . " " . $sourceDate->communication_time;
+    $sourceDate = $sourceData->communication_date . " " . $sourceData->communication_time;
     $activityDate = new DateTime($sourceDate);
     $activityData = [
       'source_contact_id' => 'user_contact_id',
@@ -221,15 +222,56 @@ class CRM_Nbrmigration_NbrCommunication {
       'activity_type_id' => $this->determineActivityType($sourceData),
       'subject' => $sourceData->template_name . " (migration)",
       'status_id' => $this->determineStatus($sourceData->status),
-      'activity_date_time' => $activityDate->format("YmdhIs"),
+      'activity_date_time' => $activityDate->format("Y-m-d H:i:s"),
     ];
     if (!empty($sourceData->contact_detail)) {
       $activityData['location'] = $sourceData->contact_detail;
     }
-    if (!empty($sourceDate->communication_notes)) {
-      $activityData['details'] = CRM_Core_DAO::escapeString($sourceDate->communication_notes);
+    if (!empty($sourceData->communication_category)) {
+      $activityData['details'] = "<strong>Communication category:</strong> " . $sourceData->communication_category;
+    }
+    if (!empty($sourceData->communication_notes)) {
+      if (!$activityData['details']) {
+        $activityData['details'] = "<strong>Communication note:</strong> " . CRM_Core_DAO::escapeString($sourceData->communication_notes);
+      }
+      else {
+        $activityData['details'] .= "\r\n <strong>Communication note:</strong> " . CRM_Core_DAO::escapeString($sourceData->communication_notes);
+      }
     }
     return $activityData;
+  }
+
+  /**
+   * Method to add activity
+   *
+   * @param array
+   * @throws Exception
+   */
+  public function createActivity($activityData) {
+    // only if we have an activity type id
+    if (isset($activityData['activity_type_id']) && !empty($activityData['activity_type_id'])) {
+      if (!isset($activityData['activity_date_time']) || empty($activityData['activity_date_time'])) {
+        $activityDateTime = new DateTime();
+        $activityData['activity_date_time'] = $activityDateTime->format("Y-m-d");
+      }
+      if (!isset($activityData['subject']) || empty($activityData['subject'])) {
+        $activityData['subject'] = "Communication activity added during migration of data from Starfish";
+      }
+      if (!isset($activityData['source_contact_id']) || empty($activityData['source_contact_id'])) {
+        $activityData['source_contact_id'] = 'user_contact_id';
+      }
+      try {
+        civicrm_api3('Activity', 'create', $activityData);
+        return TRUE;
+      }
+      catch (CiviCRM_API3_Exception $ex) {
+        $this->logger->logMessage("Could not create communication activity with data " . json_encode($activityData)
+          . ", error from API Activity create: " . $ex->getMessage());
+      }
+    }
+    else {
+      $this->logger->logMessage("Trying to create case activity but activityTypeId is empty in data: " . json_encode($activityData), "Warning");
+    }
   }
 
   /**
