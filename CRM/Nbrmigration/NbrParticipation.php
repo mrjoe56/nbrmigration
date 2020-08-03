@@ -23,7 +23,7 @@ class CRM_Nbrmigration_NbrParticipation {
     $this->noResponseStatus = Civi::service('nbrBackbone')->getNoResponseParticipationStatusValue();
     $this->notParticipatedStatus = Civi::service('nbrBackbone')->getNotParticipatedParticipationStatusValue();
     $this->participatedStatus = Civi::service('nbrBackbone')->getParticipatedParticipationStatusValue();
-    $this->refusedStatus = Civi::service('nbrBackbone')->getRefusedParticipationStatusValue();
+    $this->declinedStatus = Civi::service('nbrBackbone')->getDeclinedParticipationStatusValue();
     $this->renegedStatus = Civi::service('nbrBackbone')->getRenegedParticipationStatusValue();
     $this->returnToSenderStatus = Civi::service('nbrBackbone')->getReturnToSenderParticipationStatusValue();
     $this->selectedStatus = Civi::service('nbrBackbone')->getSelectedParticipationStatusValue();
@@ -243,6 +243,9 @@ class CRM_Nbrmigration_NbrParticipation {
       case "accepted":
         return $this->acceptedStatus;
         break;
+      case "declined":
+        return $this->declinedStatus;
+        break;
       case "excluded":
         return $this->excludedStatus;
         break;
@@ -262,7 +265,7 @@ class CRM_Nbrmigration_NbrParticipation {
         return $this->participatedStatus;
         break;
       case "refused":
-        return $this->refusedStatus;
+        return $this->declinedStatus;
         break;
       case "reneged":
         return $this->renegedStatus;
