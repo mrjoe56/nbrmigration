@@ -184,10 +184,13 @@ class CRM_Nbrmigration_NbrCommunication {
       'priority_id' => $this->normalPriorityId,
       'medium_id' => $this->determineMedium($sourceData->template_type),
       'activity_type_id' => $this->determineActivityType($sourceData),
-      'subject' => $sourceData->template_name . " (migration)",
+      'subject' => $sourceData->template_name . " (Starfish migration)",
       'status_id' => $this->determineStatus($sourceData->status),
       'activity_date_time' => $activityDate->format("Y-m-d H:i:s"),
     ];
+    if (!empty($sourceData->study_number)) {
+      $activityData['subject'] = $sourceData->template_name . " on study " . $sourceData->study_number . " (Starfish migration)";
+    }
     if (!empty($sourceData->contact_detail)) {
       $activityData['location'] = $sourceData->contact_detail;
     }
@@ -220,7 +223,7 @@ class CRM_Nbrmigration_NbrCommunication {
       'target_contact_id' => $contactId,
       'priority_id' => $this->normalPriorityId,
       'activity_type_id' => $this->determineActivityType($sourceData),
-      'subject' => $sourceData->template_name . " (migration)",
+      'subject' => $sourceData->template_name . " (Starfish migration)",
       'status_id' => $this->determineStatus($sourceData->status),
       'activity_date_time' => $activityDate->format("Y-m-d H:i:s"),
     ];
