@@ -228,7 +228,7 @@ class CRM_Nbrmigration_NbrCommunication {
       'activity_date_time' => $activityDate->format("Y-m-d H:i:s"),
     ];
     if (!empty($sourceData->contact_detail)) {
-      $activityData['location'] = $sourceData->contact_detail;
+      $activityData['details'] = "<strong>Contact detail:</strong> " . $sourceData->contact_detail;
     }
     if (!empty($sourceData->communication_category)) {
       $activityData['details'] = "<strong>Communication category:</strong> " . $sourceData->communication_category;

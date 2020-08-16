@@ -51,13 +51,13 @@ class CRM_Nbrmigration_NbrParticipation {
       // first find contact id with sample_id, log if none found
       $contactId = CRM_Nbrmigration_NbrUtils::getContactIdWithSampleId($sourceData->sample_id);
       if (!$contactId) {
-        $this->logger->logMessage('No contact found with sample_id: ' . $sourceData->sample_id, 'error');
+        $this->logger->logMessage('No contact found with participant_id: ' . $sourceData->sample_id, 'error');
         return FALSE;
       }
       // next find study, log if none found
       $studyId = CRM_Nbrmigration_NbrUtils::getStudyIdWithStudyNumber($sourceData->study_number);
       if (!$studyId) {
-        $this->logger->logMessage('No study found with study_number: ' . $sourceData->study_number, 'error');
+        $this->logger->logMessage('No study found with study_number: ' . $sourceData->study_number . ', participant_id ' . $sourceData->sample_id, 'error');
         return FALSE;
       }
       // create case with custom data (only if volunteer is not already on study)
@@ -66,15 +66,15 @@ class CRM_Nbrmigration_NbrParticipation {
           $createdCase = civicrm_api3('Case', 'create', $this->prepareParticipationData($contactId, $studyId, $sourceData));
           // add sent to researcher activity if required
           if (!empty($sourceData->sent_to_researcher)) {
-            $this->createCaseActivity($this->prepareSentData($createdCase['id'], $contactId, $sourceData));
+            $this->createCaseActivity($sourceData->sample_id, $this->prepareSentData($createdCase['id'], $contactId, $sourceData));
           }
           // add change status from invited to participated activity if required
           if (!empty($sourceData->project_participation_date_answered)) {
-            $this->createCaseActivity($this->prepareAnsweredData($createdCase['id'], $contactId, $sourceData));
+            $this->createCaseActivity($sourceData->sample_id, $this->prepareAnsweredData($createdCase['id'], $contactId, $sourceData));
           }
           // add meeting activity with note if required
           if (!empty($sourceData->project_participation_notes)) {
-            $this->createCaseActivity($this->prepareNoteData($createdCase['id'], $contactId, $sourceData));
+            $this->createCaseActivity($sourceData->sample_id, $this->prepareNoteData($createdCase['id'], $contactId, $sourceData));
           }
           try {
             civicrm_api3("Contact", "addidentity", [
@@ -84,17 +84,17 @@ class CRM_Nbrmigration_NbrParticipation {
             ]);
           }
           catch (CiviCRM_API3_Exception $ex) {
-            $this->logger->logMessage("Could not add study participant id ") . $sourceData->anon_study_participation_id
-            . " as new contact identifier for contact ID " . $contactId . ", error from API Contact addidentity: " . $ex->getMessage();
+            $this->logger->logMessage("Could not add study participant id " . $sourceData->anon_study_participation_id
+            . " as new contact identifier for contact ID " . $contactId . " and participant_id " . $sourceData->sample_id . ", error from API Contact addidentity: " . $ex->getMessage());
           }
         }
         catch (CiviCRM_API3_Exception $ex) {
-          $this->logger->logMessage('Error when trying to create case in: ' . __METHOD__ . ', API error message: ' . $ex->getMessage(), 'error');
+          $this->logger->logMessage('Error when trying to create case in: ' . __METHOD__ . ' for participant_id ' . $sourceData->sample_id . ', API error message: ' . $ex->getMessage(), 'error');
           return FALSE;
         }
       }
       else {
-        $this->logger->logMessage('Volunteer with id: ' . $contactId . ' is already on study with id: ' . $studyId . ', not imported.', 'error');
+        $this->logger->logMessage('Volunteer with id: ' . $contactId . ' and participant_id ' . $sourceData->sample_id . ' is already on study with id: ' . $studyId . ', not imported.', 'error');
         return FALSE;
       }
     }
@@ -168,10 +168,11 @@ class CRM_Nbrmigration_NbrParticipation {
   /**
    * Method to add activity to the migrated case
    *
+   * @param $participantId
    * @param array
    * @throws Exception
    */
-  public function createCaseActivity($activityData) {
+  public function createCaseActivity($participantId, $activityData) {
     // only if we have a case id and activity type id
     if (isset($activityData['case_id']) && !empty($activityData['case_id']) && isset($activityData['activity_type_id']) && !empty($activityData['activity_type_id'])) {
       if (!isset($activityData['activity_date_time']) || empty($activityData['activity_date_time'])) {
@@ -193,11 +194,11 @@ class CRM_Nbrmigration_NbrParticipation {
       }
       catch (CiviCRM_API3_Exception $ex) {
         $this->logger->logMessage("Could not create participation case activity with data " . json_encode($activityData)
-          . ", error from API Activity create: " . $ex->getMessage());
+          . " for participant_id " . $participantId . ", error from API Activity create: " . $ex->getMessage());
       }
     }
     else {
-      $this->logger->logMessage("Trying to create case activity but caseId/activityTypeId is empty in data: " . json_encode($activityData), "Warning");
+      $this->logger->logMessage("Trying to create case activity for participant_id " . $participantId . " but caseId/activityTypeId is empty in data: " . json_encode($activityData) , "Warning");
     }
   }
 
@@ -213,10 +214,10 @@ class CRM_Nbrmigration_NbrParticipation {
     $result = [
       'contact_id' => $contactId,
       'case_type_id' => $this->participationCaseTypeId,
-      'subject' => "Selected for study " . $sourceData->study_number,
+      'subject' => "Study " . $sourceData->study_number . " (Starfish migration)",
       'status_id' => "Open",
       $this->studyIdCustomField => $studyId,
-      $this->studyParticipationStatusCustomField => $this->transformStatus($sourceData->status),
+      $this->studyParticipationStatusCustomField => $this->transformStatus($sourceData->status, $sourceData->sample_id),
     ];
     if (!empty($sourceData->anon_study_participation_id)) {
       $result[$this->studyParticipantIdCustomField] = $sourceData->anon_study_participation_id;
@@ -235,9 +236,10 @@ class CRM_Nbrmigration_NbrParticipation {
    * Method to transform the source status to the civicrm study participation status
    *
    * @param $sourceStatus
+   * @param $participantId
    * @return mixed
    */
-  private function transformStatus($sourceStatus) {
+  private function transformStatus($sourceStatus, $participantId) {
     $sourceStatus = strtolower(trim($sourceStatus));
     switch ($sourceStatus) {
       case "accepted":
@@ -280,7 +282,7 @@ class CRM_Nbrmigration_NbrParticipation {
         return $this->withdrawnStatus;
         break;
       default:
-        $this->logger->logMessage("Status " . $sourceStatus . " is not valid, status Selected used.", "warning");
+        $this->logger->logMessage("Status " . $sourceStatus . " for participant_id " . $participantId . " not valid, status Selected used.", "warning");
         return $this->selectedStatus;
         break;
     }
@@ -296,24 +298,24 @@ class CRM_Nbrmigration_NbrParticipation {
     $valid = TRUE;
     // sample_id should be present and not empty
     if (!isset($sourceData->sample_id) || empty($sourceData->sample_id)) {
-      $this->logger->logMessage('Empty sample_id or no sample_id in source data with id: ' . $sourceData->id, 'error');
+      $this->logger->logMessage('Empty sample_id or no sample_id in source data with participant_id ' . $sourceData->sample_id . ' and id ' . $sourceData->id, 'error');
       $valid = FALSE;
     }
     // study_number should be present and not empty
     if (!isset($sourceData->study_number) || empty($sourceData->study_number)) {
-      $this->logger->logMessage('Empty study_number or no study_number in source data with id: ' . $sourceData->id, 'error');
+      $this->logger->logMessage('Empty study_number or no study_number in source data with participant_id ' . $sourceData->sample_id . ' and id ' . $sourceData->id, 'error');
       $valid = FALSE;
     }
     // status should be present and not empty
     if (!isset($sourceData->status) || empty($sourceData->status)) {
-      $this->logger->logMessage('Empty status or no status in source data with id: ' . $sourceData->id, 'error');
+      $this->logger->logMessage('Empty status or no status in source data participant_id ' . $sourceData->sample_id . ' and id ' . $sourceData->id, 'error');
       $valid = FALSE;
     }
     else {
       // if status != selected, anon_study_participation_id should be present and not empty
       if (strtolower($sourceData->status) != "selected") {
         if (!isset($sourceData->anon_study_participation_id) || empty($sourceData->anon_study_participation_id)) {
-          $this->logger->logMessage('Empty anon_study_participation_id or no anon_study_participation_id whilst status is not selected in source data with id: ' . $sourceData->id, 'error');
+          $this->logger->logMessage('Empty anon_study_participation_id or no anon_study_participation_id whilst status is not selected in source data participant_id ' . $sourceData->sample_id . ' and id ' . $sourceData->id, 'error');
           $valid = FALSE;
         }
       }
