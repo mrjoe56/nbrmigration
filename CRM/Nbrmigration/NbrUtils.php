@@ -19,28 +19,12 @@ class CRM_Nbrmigration_NbrUtils {
     // check if volunteer_ids table exists with required columns
     $table = CRM_Nihrbackbone_BackboneConfig::singleton()->getVolunteerIdsCustomGroup('table_name');
     $participantColumn = CRM_Nihrbackbone_BackboneConfig::singleton()->getVolunteerIdsCustomField('nva_participant_id', 'column_name');
-    if (CRM_Nbrmigration_NbrUtils::checkTableFieldExists($table, $participantColumn)) {
-      $query = "SELECT entity_id FROM " . $table . " WHERE " . $participantColumn . " = %1";
-      $contactId = CRM_Core_DAO::singleValueQuery($query, [1 => [$sampleId, "String"]]);
-      if ($contactId) {
-        return (int)$contactId;
-      }
+    $query = "SELECT entity_id FROM " . $table . " WHERE " . $participantColumn . " = %1";
+    $contactId = CRM_Core_DAO::singleValueQuery($query, [1 => [$sampleId, "String"]]);
+    if ($contactId) {
+      return (int)$contactId;
     }
     return FALSE;
-  }
-
-  /**
-   * Method to check if a column and table exist
-   *
-   * @param $table
-   * @param $column
-   * @return bool
-   */
-  public static function checkTableFieldExists($table, $column) {
-    if (!CRM_Core_DAO::checkTableExists($table) || !CRM_Core_BAO_SchemaHandler::checkIfFieldExists($table, $column)) {
-      return FALSE;
-    }
-    return TRUE;
   }
 
   /**
@@ -55,12 +39,10 @@ class CRM_Nbrmigration_NbrUtils {
     }
     $table = CRM_Nihrbackbone_BackboneConfig::singleton()->getStudyDataCustomGroup('table_name');
     $studyNumberColumn = CRM_Nihrbackbone_BackboneConfig::singleton()->getStudyCustomField('nsd_study_number', 'column_name');
-    if (CRM_Nbrmigration_NbrUtils::checkTableFieldExists($table, $studyNumberColumn)) {
-      $query = "SELECT entity_id FROM " . $table . " WHERE " . $studyNumberColumn . " = %1";
-      $studyId = CRM_Core_DAO::singleValueQuery($query, [1 => [$studyNumber, "String"]]);
-      if ($studyId) {
-        return (int)$studyId;
-      }
+    $query = "SELECT entity_id FROM " . $table . " WHERE " . $studyNumberColumn . " = %1";
+    $studyId = CRM_Core_DAO::singleValueQuery($query, [1 => [$studyNumber, "String"]]);
+    if ($studyId) {
+      return (int)$studyId;
     }
     return FALSE;
   }

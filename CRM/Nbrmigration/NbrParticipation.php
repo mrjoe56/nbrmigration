@@ -76,17 +76,8 @@ class CRM_Nbrmigration_NbrParticipation {
           if (!empty($sourceData->project_participation_notes)) {
             $this->createCaseActivity($sourceData->sample_id, $this->prepareNoteData($createdCase['id'], $contactId, $sourceData));
           }
-          try {
-            civicrm_api3("Contact", "addidentity", [
-              'contact_id' => $contactId,
-              'identifier' => $sourceData->anon_study_participation_id,
-              'identifier_type' => CRM_Nihrnumbergenerator_Config::singleton()->studyParticipantIdIdentifier,
-            ]);
-          }
-          catch (CiviCRM_API3_Exception $ex) {
-            $this->logger->logMessage("Could not add study participant id " . $sourceData->anon_study_participation_id
-            . " as new contact identifier for contact ID " . $contactId . " and participant_id " . $sourceData->sample_id . ", error from API Contact addidentity: " . $ex->getMessage());
-          }
+          // add identifier
+          $this->addIdentifier($contactId, $sourceData->anon_study_participation_id);
         }
         catch (CiviCRM_API3_Exception $ex) {
           $this->logger->logMessage('Error when trying to create case in: ' . __METHOD__ . ' for participant_id ' . $sourceData->sample_id . ', API error message: ' . $ex->getMessage(), 'error');
@@ -98,6 +89,24 @@ class CRM_Nbrmigration_NbrParticipation {
         return FALSE;
       }
     }
+  }
+
+  /**
+   * Method to add identifier for study participation id
+   *
+   * @param $contactId
+   * @param $anonId
+   */
+  private function addIdentifier($contactId, $anonId) {
+    $query = "INSERT INTO civicrm_value_contact_id_history (entity_id, identifier_type, identifier, used_since)
+           VALUES(%1, %2, %3, %4)";
+    $queryParams = [
+      1 => [(int) $contactId, "Integer"],
+      2 => ["cih_study_participant_id", "String"],
+      3 => [$anonId, "String"],
+      4 => ["2016-01-01", "String"],
+    ];
+    CRM_Core_DAO::executeQuery($query, $queryParams);
   }
 
   /**
@@ -246,7 +255,8 @@ class CRM_Nbrmigration_NbrParticipation {
         return $this->acceptedStatus;
         break;
       case "declined":
-        return $this->declinedStatus;
+      case "refused":
+      return $this->declinedStatus;
         break;
       case "excluded":
         return $this->excludedStatus;
@@ -265,9 +275,6 @@ class CRM_Nbrmigration_NbrParticipation {
         break;
       case "participated":
         return $this->participatedStatus;
-        break;
-      case "refused":
-        return $this->declinedStatus;
         break;
       case "reneged":
         return $this->renegedStatus;

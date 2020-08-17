@@ -41,6 +41,7 @@ class CRM_Nbrmigration_NbrVisit {
     $this->otherSampleSiteValue = Civi::service('nbrBackbone')->getOtherSampleSiteValue();
     // get all option values for sample site, bleed difficulties, consent version and questionnaire version
     $this->bleedDifficulties = [];
+    $this->detailLines = [];
     $this->consentVersions = [];
     $this->questionnaireVersions = [];
     $this->sampleSites = [];
@@ -182,21 +183,20 @@ class CRM_Nbrmigration_NbrVisit {
     }
     else {
       // create if not exists
-      $optionNameAndValue = $this->prepareOptionNameAndValue($consentVersion);
-      try {
-        $created = civicrm_api3('OptionValue', 'create', [
-          'option_group_id' => $this->consentVersionOptionGroupId,
-          'label' => $consentVersion,
-          'name' => $optionNameAndValue,
-          'value' => $optionNameAndValue,
-          'is_reserved' => 1,
-          'is_active' => 1,
-        ]);
-        $consentData[$element] = $optionNameAndValue;
-      }
-      catch (CiviCRM_API3_Exception $ex) {
-        $this->logger->logMessage("Could not create consent version " . $consentVersion . " in CiviCRM, consent version ignored!", "Warning");
-      }
+      $optionNameAndValue = Civi::service('nbrBackbone')->generateLabelFromValue($consentVersion);
+      $query = "SELECT MAX(weight) FROM civicrm_option_value WHERE option_group_id = %1";
+      $newWeight = CRM_Core_DAO::singleValueQuery($query, [1 => [$this->consentVersionOptionGroupId, "Integer"]]);
+      $newWeight++;
+      $insert = "INSERT INTO civicrm_option_value (option_group_id, name, value, label, is_reserved, is_active, weight)
+        VALUES(%1, %2, %2, %3, %4, %4, %5)";
+      $insertParams = [
+        1 => [$this->consentVersionOptionGroupId, "Integer"],
+        2 => [$optionNameAndValue, "String"],
+        3 => [$consentVersion, "String"],
+        4 => [1, "Integer"],
+        5 => [(int) $newWeight, "Integer"],
+      ];
+      CRM_Core_DAO::executeQuery($insert, $insertParams);
     }
   }
 
@@ -214,21 +214,20 @@ class CRM_Nbrmigration_NbrVisit {
     }
     else {
       // create if not exists
-      $optionNameAndValue = $this->prepareOptionNameAndValue($questionnaireVersion);
-      try {
-        $created = civicrm_api3('OptionValue', 'create', [
-          'option_group_id' => $this->questionnaireVersionOptionGroupId,
-          'label' => $questionnaireVersion,
-          'name' => $optionNameAndValue,
-          'value' => $optionNameAndValue,
-          'is_reserved' => 1,
-          'is_active' => 1,
-        ]);
-        $consentData[$element] = $optionNameAndValue;
-      }
-      catch (CiviCRM_API3_Exception $ex) {
-        $this->logger->logMessage("Could not create questionnaire version " . $questionnaireVersion . " in CiviCRM, questionnaire version ignored!", "Warning");
-      }
+      $optionNameAndValue = Civi::service('nbrBackbone')->generateLabelFromValue($questionnaireVersion);
+      $query = "SELECT MAX(weight) FROM civicrm_option_value WHERE option_group_id = %1";
+      $newWeight = CRM_Core_DAO::singleValueQuery($query, [1 => [$this->questionnaireVersionOptionGroupId, "Integer"]]);
+      $newWeight++;
+      $insert = "INSERT INTO civicrm_option_value (option_group_id, name, value, label, is_reserved, is_active, weight)
+        VALUES(%1, %2, %2, %3, %4, %4, %5)";
+      $insertParams = [
+        1 => [$this->questionnaireVersionOptionGroupId, "Integer"],
+        2 => [$optionNameAndValue, "String"],
+        3 => [$questionnaireVersion, "String"],
+        4 => [1, "Integer"],
+        5 => [(int) $newWeight, "Integer"],
+      ];
+      CRM_Core_DAO::executeQuery($insert, $insertParams);
     }
   }
 
@@ -494,28 +493,6 @@ class CRM_Nbrmigration_NbrVisit {
     }
     $visitDate = new DateTime($visitDate);
     return $visitDate;
-  }
-
-  /**
-   * Method to get or create an option value
-   *
-   * @param $optionGroupName
-   * @param $sourceValue
-   * @return null
-   */
-  private function getOrCreateOptionValue($optionGroupName, $sourceValue) {
-    $optionValue = NULL;
-    try {
-      $count = civicrm_api3('OptionValue', 'getcount', [
-        'option_group_id' => $optionGroupName,
-        'label' => $sourceValue,
-      ]);
-
-    }
-    catch (CiviCRM_API3_Exception $ex) {
-
-    }
-    return $optionValue;
   }
 
   /**
