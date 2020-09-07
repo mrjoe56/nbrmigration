@@ -20,13 +20,13 @@
   <requires>
     <ext>nihrbackbone</ext>
   </requires>
-  <releaseDate>2020-08-03</releaseDate>
-  <version>1.0</version>
+  <releaseDate>2020-09-07</releaseDate>
+  <version>1.1</version>
   <develStage>beta</develStage>
   <compatibility>
     <ver>4.7</ver>
   </compatibility>
-  <comments>Extension is in development</comments>
+  <comments>Extension is being tested</comments>
   <civix>
     <namespace>CRM/Nbrmigration</namespace>
   </civix>
