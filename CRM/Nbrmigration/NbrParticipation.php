@@ -321,15 +321,6 @@ class CRM_Nbrmigration_NbrParticipation {
       $this->logger->logMessage('Empty status or no status in source data participant_id ' . $sourceData->sample_id . ' and id ' . $sourceData->id, 'error');
       $valid = FALSE;
     }
-    else {
-      // if status != selected, anon_study_participation_id should be present and not empty
-      if (strtolower($sourceData->status) != "selected") {
-        if (!isset($sourceData->anon_study_participation_id) || empty($sourceData->anon_study_participation_id)) {
-          $this->logger->logMessage('Empty anon_study_participation_id or no anon_study_participation_id whilst status is not selected in source data participant_id ' . $sourceData->sample_id . ' and id ' . $sourceData->id, 'error');
-          $valid = FALSE;
-        }
-      }
-    }
     return $valid;
   }
 

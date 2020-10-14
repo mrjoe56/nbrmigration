@@ -20,8 +20,8 @@
   <requires>
     <ext>nihrbackbone</ext>
   </requires>
-  <releaseDate>2020-09-07</releaseDate>
-  <version>1.1</version>
+  <releaseDate>2020-10-14</releaseDate>
+  <version>1.2</version>
   <develStage>beta</develStage>
   <compatibility>
     <ver>4.7</ver>

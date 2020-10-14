@@ -34,7 +34,7 @@ class CRM_Nbrmigration_NbrVisit {
     $this->normalPriorityId = Civi::service('nbrBackbone')->getNormalPriorityId();
     $this->sampleSiteOptionGroupId = Civi::service('nbrBackbone')->getSampleSiteOptionGroupId();
     $this->bleedDifficultiesOptionGroupId = Civi::service('nbrBackbone')->getBleedDifficultiesOptionGroupId();
-    $this->consentVersionOptionGroupId = Civi::service('nbrBackbone')->getConsentVersionOptionGroupId();
+    $this->consentVersionOptionGroupId = Civi::service('nbrBackbone')->getParticipationConsentVersionOptionGroupId();
     $this->questionnaireVersionOptionGroupId = Civi::service('nbrBackbone')->getQuestionnaireVersionOptionGroupId();
     $this->studyPaymentOptionGroupId = Civi::service('nbrBackbone')->getStudyPaymentOptionGroupId();
     $this->otherBleedDifficultiesValue = Civi::service('nbrBackbone')->getOtherBleedDifficultiesValue();
