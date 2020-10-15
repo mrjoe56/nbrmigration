@@ -100,16 +100,27 @@ class CRM_Nbrmigration_NbrParticipation {
    * @param $anonId
    */
   private function addIdentifier($contactId, $anonId) {
-    $query = "INSERT INTO civicrm_value_contact_id_history (entity_id, identifier_type, identifier, used_since)
-           VALUES(%1, %2, %3, %4)";
-    $usedSince = new DateTime();
+    // only if identifier does not yet exist for contact
+    $query = "SELECT COUNT(*) FROM civicrm_value_contact_id_history
+        WHERE entity_id = %1 AND identifier_type = %2 AND identifier = %3";
     $queryParams = [
       1 => [(int) $contactId, "Integer"],
       2 => ["cih_study_participant_id", "String"],
-      3 => [$anonId, "String"],
-      4 => [$usedSince->format('Y-m-d'), "String"],
+      3 => [$anonId, "String"]
     ];
-    CRM_Core_DAO::executeQuery($query, $queryParams);
+    $count = CRM_Core_DAO::singleValueQuery($query, $queryParams);
+    if ($count == 0) {
+      $insert = "INSERT INTO civicrm_value_contact_id_history (entity_id, identifier_type, identifier, used_since)
+           VALUES(%1, %2, %3, %4)";
+      $usedSince = new DateTime();
+      $insertParams = [
+        1 => [(int) $contactId, "Integer"],
+        2 => ["cih_study_participant_id", "String"],
+        3 => [$anonId, "String"],
+        4 => [$usedSince->format('Y-m-d'), "String"],
+      ];
+      CRM_Core_DAO::executeQuery($insert, $insertParams);
+    }
   }
 
   /**
