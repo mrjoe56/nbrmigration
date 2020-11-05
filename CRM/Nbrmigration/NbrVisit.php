@@ -352,15 +352,17 @@ class CRM_Nbrmigration_NbrVisit {
    *
    * @param $studyNumber
    * @param $activityDate
-   * @return mixed
+   * @return string
    */
   private function getSubject($studyNumber, $activityDate) {
+    $visitDate = $activityDate->format("d-m-Y");
     if (empty($studyNumber)) {
-      return "Visit on " . $activityDate->format("d-m-Y") . " on recruitment case (Starfish migration)";
+      return "Visit on " . $visitDate . " on recruitment case (Starfish migration)";
     }
     else {
-      return "Visit on " . $activityDate->format("d-m-Y") . " on ". $studyNumber > " (Starfish migration)";
+      return "Visit on " . $visitDate . " on ". $studyNumber . " (Starfish migration)";
     }
+    return $text;
   }
 
   /**
@@ -387,6 +389,7 @@ class CRM_Nbrmigration_NbrVisit {
   private function addCustomFields($sourceData, &$activityData) {
     $sourceArray = CRM_Nihrbackbone_Utils::moveDaoToArray($sourceData);
     foreach ($sourceArray as $sourceFieldKey => $sourceFieldValue) {
+      $sourceFieldValue = trim($sourceFieldValue);
       if (isset($this->mapping[$sourceFieldKey]) && !empty($sourceFieldValue) && $sourceFieldValue != "0.00") {
         $activityData[$this->mapping[$sourceFieldKey]] = $sourceFieldValue;
       }
@@ -400,7 +403,7 @@ class CRM_Nbrmigration_NbrVisit {
     if (!empty($sourceData->sample_site)) {
       $this->addSampleSite($sourceData->sample_site, $activityData);
     }
-    if (!empty($sourceData->study_payment)) {
+    if (!empty($sourceData->study_payment) && $sourceData->study_payment != "") {
       $this->addStudyPayment($sourceData->study_payment, $activityData);
     }
   }
@@ -561,6 +564,11 @@ class CRM_Nbrmigration_NbrVisit {
     if (!isset($sourceData->sample_id) || empty($sourceData->sample_id)) {
       $this->logger->logMessage('Empty sample_id or no sample_id in source data with id: ' . $sourceData->id, 'error');
       $valid = FALSE;
+    }
+    // trim all properties
+    $properties = CRM_Nihrbackbone_Utils::moveDaoToArray($sourceData);
+    foreach ($properties as $property => $value) {
+      $sourceData->$property = trim($value);
     }
     return $valid;
   }
