@@ -189,7 +189,7 @@ class CRM_Nbrmigration_NbrCommunication {
       'activity_date_time' => $activityDate->format("Y-m-d H:i:s"),
     ];
     if (!empty($sourceData->study_number)) {
-      $activityData['subject'] = $sourceData->template_name . " on study " . $sourceData->study_number;
+      $activityData['subject'] = $sourceData->template_name;
     }
     if (!empty($sourceData->contact_detail)) {
       $activityData['location'] = $sourceData->contact_detail;
