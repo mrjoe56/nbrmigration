@@ -237,7 +237,7 @@ class CRM_Nbrmigration_NbrParticipation {
     $result = [
       'contact_id' => $contactId,
       'case_type_id' => $this->participationCaseTypeId,
-      'subject' => "Study " . $sourceData->study_number . " (Starfish migration)",
+      'subject' => "Study " . $sourceData->study_number,
       'status_id' => "Open",
       $this->studyIdCustomField => $studyId,
       $this->studyParticipationStatusCustomField => $this->transformStatus($sourceData->status, $sourceData->sample_id),
