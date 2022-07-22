@@ -101,12 +101,22 @@ class CRM_Nbrmigration_NbrParticipation {
    */
   private function addIdentifier($contactId, $anonId) {
     // only if identifier does not yet exist for contact
-    $query = "SELECT COUNT(*) FROM civicrm_value_contact_id_history
+
+    // *** for DAA data upload: do not check identifier type - if study participation ID is
+    // *** participant ID or Pack ID - do not upload
+
+    /* $query = "SELECT COUNT(*) FROM civicrm_value_contact_id_history
         WHERE entity_id = %1 AND identifier_type = %2 AND identifier = %3";
     $queryParams = [
       1 => [(int) $contactId, "Integer"],
       2 => ["cih_study_participant_id", "String"],
       3 => [$anonId, "String"]
+    ]; */
+    $query = "SELECT COUNT(*) FROM civicrm_value_contact_id_history
+        WHERE entity_id = %1 AND identifier = %2";
+    $queryParams = [
+      1 => [(int) $contactId, "Integer"],
+      2 => [$anonId, "String"]
     ];
     $count = CRM_Core_DAO::singleValueQuery($query, $queryParams);
     if ($count == 0) {
@@ -233,12 +243,16 @@ class CRM_Nbrmigration_NbrParticipation {
    * @param $sourceData
    * @return array
    */
+
+  //*** for DAA upload: set case open date to invite date
+
   private function prepareParticipationData($contactId, $studyId, $sourceData) {
     $result = [
       'contact_id' => $contactId,
       'case_type_id' => $this->participationCaseTypeId,
       'subject' => "Study " . $sourceData->study_number,
       'status_id' => "Open",
+      'start_date' => $sourceData->date_invited,
       $this->studyIdCustomField => $studyId,
       $this->studyParticipationStatusCustomField => $this->transformStatus($sourceData->status, $sourceData->sample_id),
     ];
