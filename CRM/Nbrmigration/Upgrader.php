@@ -10,6 +10,18 @@ class CRM_Nbrmigration_Upgrader extends CRM_Nbrmigration_Upgrader_Base {
   // upgrade tasks. They are executed in order (like Drupal's hook_update_N).
 
   /**
+   * Create table for nbr consent link
+   *
+   * @return TRUE on success
+   * @throws Exception
+   */
+  public function upgrade_1001() {
+    $this->ctx->log->info('Applying update 1001');
+    $this->executeSqlFile('sql/auto_install.sql');
+    return TRUE;
+  }
+
+  /**
    * Example: Run an external SQL script when the module is installed.
    *
   public function install() {
@@ -54,19 +66,6 @@ class CRM_Nbrmigration_Upgrader extends CRM_Nbrmigration_Upgrader_Base {
   public function disable() {
     CRM_Core_DAO::executeQuery('UPDATE foo SET is_active = 0 WHERE bar = "whiz"');
   }
-
-  /**
-   * Example: Run a couple simple queries.
-   *
-   * @return TRUE on success
-   * @throws Exception
-   *
-  public function upgrade_4200() {
-    $this->ctx->log->info('Applying update 4200');
-    CRM_Core_DAO::executeQuery('UPDATE foo SET bar = "whiz"');
-    CRM_Core_DAO::executeQuery('DELETE FROM bang WHERE willy = wonka(2)');
-    return TRUE;
-  } // */
 
 
   /**

@@ -5,15 +5,19 @@ use Civi\Test\HookInterface;
 use Civi\Test\TransactionalInterface;
 
 /**
- * NbrParticipation.Migrate API Test Case
+ * NbrConsentLink.Migrate API Test Case
  * This is a generic test class implemented with PHPUnit.
  * @group headless
  */
-class api_v3_NbrParticipation_MigrateTest extends \PHPUnit\Framework\TestCase implements HeadlessInterface, HookInterface, TransactionalInterface {
+class api_v3_NbrConsentLink_MigrateTest extends \PHPUnit\Framework\TestCase implements HeadlessInterface, HookInterface, TransactionalInterface {
+  use \Civi\Test\Api3TestTrait;
 
   /**
+   * Set up for headless tests.
+   *
    * Civi\Test has many helpers, like install(), uninstall(), sql(), and sqlFile().
-   * See: https://github.com/civicrm/org.civicrm.testapalooza/blob/master/civi-test.md
+   *
+   * See: https://docs.civicrm.org/dev/en/latest/testing/phpunit/#civitest
    */
   public function setUpHeadless() {
     return \Civi\Test::headless()
@@ -42,7 +46,7 @@ class api_v3_NbrParticipation_MigrateTest extends \PHPUnit\Framework\TestCase im
    * Note how the function name begins with the word "test".
    */
   public function testApiExample() {
-    $result = civicrm_api3('NbrParticipation', 'Migrate', array('magicword' => 'sesame'));
+    $result = civicrm_api3('NbrConsentLink', 'migrate', array('magicword' => 'sesame'));
     $this->assertEquals('Twelve', $result['values'][12]['name']);
   }
 

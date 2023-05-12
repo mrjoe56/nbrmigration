@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+
+<table>
+  <base>CRM/Nbrmigration</base>
+  <class>NbrConsentLink</class>
+  <name>civicrm_nbr_consent_link</name>
+  <comment>FIXME</comment>
+  <log>true</log>
+
+  <field>
+    <name>id</name>
+    <type>int unsigned</type>
+    <required>true</required>
+    <comment>Unique NbrConsentLink ID</comment>
+    <html>
+      <type>Number</type>
+    </html>
+  </field>
+  <primaryKey>
+    <name>id</name>
+    <autoincrement>true</autoincrement>
+  </primaryKey>
+
+  <field>
+    <name>cih_type_participant_id</name>
+    <type>varchar</type>
+    <length>32</length>
+    <comment>Particpant ID</comment>
+  </field>
+
+  <field>
+    <name>cih_type_packid</name>
+    <type>varchar</type>
+    <length>32</length>
+    <comment>Pack ID</comment>
+  </field>
+
+  <field>
+    <name>consent_version</name>
+    <type>varchar</type>
+    <length>128</length>
+    <comment>Pack ID</comment>
+  </field>
+
+  <field>
+    <name>consent_date</name>
+    <type>varchar</type>
+    <length>10</length>
+    <comment>Pack ID</comment>
+  </field>
+
+  <field>
+    <name>panel</name>
+    <type>varchar</type>
+    <length>64</length>
+    <comment>Panel</comment>
+  </field>
+
+  <field>
+    <name>site</name>
+    <type>varchar</type>
+    <length>64</length>
+    <comment>Site</comment>
+  </field>
+
+  <field>
+    <name>centre</name>
+    <type>varchar</type>
+    <length>64</length>
+    <comment>Centre</comment>
+  </field>
+
+  <field>
+    <name>processed</name>
+    <type>boolean</type>
+    <default>FALSE</default>
+    <comment>Processed</comment>
+  </field>
+
+</table>
