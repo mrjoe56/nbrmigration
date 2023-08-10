@@ -239,7 +239,7 @@ class CRM_Nbrmigration_BAO_NbrConsentLink extends CRM_Nbrmigration_DAO_NbrConsen
             ->addWhere('is_current_revision', '=', TRUE)
             ->addWhere('act_contact.record_type_id', '=', \Civi::service('nbrBackbone')->getTargetRecordTypeId())
             ->addWhere('act_contact.contact_id', '=', $contactId)
-            ->execute()->first();
+            ->setCheckPermissions(FALSE)->execute()->first();
           if (isset($activity['id'])) {
             $consentActivityId = (int) $activity['id'];
           }
