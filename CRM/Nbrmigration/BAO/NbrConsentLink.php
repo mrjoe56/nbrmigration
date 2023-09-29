@@ -127,14 +127,14 @@ class CRM_Nbrmigration_BAO_NbrConsentLink extends CRM_Nbrmigration_DAO_NbrConsen
   /**
    * Method to find centre/panel/site ID with name
    *
-   * @param string $centreName
-   * @param string $panelName
-   * @param string $siteName
+   * @param string|NULL $centreName
+   * @param string|NULL $panelName
+   * @param string|NULL $siteName
    * @param int $contactId
    * @param CRM_Nihrbackbone_NihrLogger $logger
    * @return int|NULL
    */
-  public static function findPanelSiteCentreId(string $centreName, string $panelName, string $siteName, int $contactId, CRM_Nihrbackbone_NihrLogger $logger): ?int {
+  public static function findPanelSiteCentreId(?string $centreName, ?string $panelName, ?string $siteName, int $contactId, CRM_Nihrbackbone_NihrLogger $logger): ?int {
     $centrePanelSiteId = NULL;
     if ($contactId) {
       if (!empty($centreName) || !empty($panelName) || !empty($siteName)) {
@@ -226,27 +226,24 @@ class CRM_Nbrmigration_BAO_NbrConsentLink extends CRM_Nbrmigration_DAO_NbrConsen
   public static function findConsentActivityId(string $consentVersion, string $consentDate, int $contactId, CRM_Nihrbackbone_NihrLogger $logger): ?int {
     $consentActivityId = NULL;
     if ($consentDate && $consentVersion) {
-      $targetId = \Civi::service('nbrBackbone')->getTargetRecordTypeId();
       try {
         $activityDate = new DateTime($consentDate);
-        try {
-          $activity = \Civi\Api4\Activity::get()
-            ->addSelect('id')->setCheckPermissions(FALSE)
-            ->addJoin('ActivityContact AS act_contact', 'INNER', ['id', '=', 'act_contact.activity_id'])
-            ->addWhere('nihr_volunteer_consent.nvc_consent_version:name', '=', $consentVersion)
-            ->addWhere('activity_date_time', '=', $activityDate->format("YmdHis"))
-            ->addWhere('is_deleted', '=', FALSE)
-            ->addWhere('is_current_revision', '=', TRUE)
-            ->addWhere('act_contact.record_type_id', '=', \Civi::service('nbrBackbone')->getTargetRecordTypeId())
-            ->addWhere('act_contact.contact_id', '=', $contactId)
-            ->execute()->first();
-          if (isset($activity['id'])) {
-            $consentActivityId = (int) $activity['id'];
-          }
-        }
-        catch (API_Exception $ex) {
-          $logger->logMessage("Error trying to find consent activity for consent version " . $consentVersion
-            . " and consent date " . $consentDate . ", error message from API4 Activity get: " . $ex->getMessage());
+        $query = "SELECT a.id
+            FROM civicrm_activity a
+                JOIN civicrm_activity_contact b ON a.id = b.activity_id
+                JOIN civicrm_value_nihr_volunteer_consent c ON a.id = c.entity_id
+            WHERE b.contact_id = %1 AND b.record_type_id = %2 AND (activity_date_time BETWEEN %3 AND %4) AND c.nvc_consent_version = %5";
+        $queryParams = [
+          1 => [$contactId, 'Integer'],
+          2 => [\Civi::service('nbrBackbone')->getTargetRecordTypeId(), 'Integer'],
+          3 => [$activityDate->format("Y-m-d") . " 00:00:00", "String"],
+          4 => [$activityDate->format("Y-m-d") . " 23:59:59", "String"],
+          5 => [$consentVersion, "String"],
+        ];
+        $consentActivityId = CRM_Core_DAO::singleValueQuery($query, $queryParams);
+        if (!$consentActivityId) {
+          $logger->logMessage("Could not find a consent activity id for contact ID " . $contactId . " and consent version "
+            . $consentVersion . " on consent date " . $consentDate);
         }
       }
       catch (Exception $ex) {
