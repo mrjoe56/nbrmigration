@@ -21,7 +21,9 @@ class CRM_Nbrmigration_BAO_NbrConsentLink extends CRM_Nbrmigration_DAO_NbrConsen
       $consentActivityId = self::findConsentActivityId($dao->consent_version, $dao->consent_date, $contactId, $logger);
       if ($consentActivityId) {
         if (!self::isExistingPackLink($dao->cih_type_packid, $consentActivityId, $contactId)) {
-          CRM_Nbrpanelconsentpack_BAO_ConsentPackLink::createPackLink($consentActivityId, $contactId, $dao->cih_type_packid);
+          if ($dao->cih_type_packid) {
+            CRM_Nbrpanelconsentpack_BAO_ConsentPackLink::createPackLink($consentActivityId, $contactId, $dao->cih_type_packid);
+          }
         }
         // find panel/site/centre id, create if not found
         $centrePanelSiteId = self::findPanelSiteCentreId($dao->centre, $dao->panel, $dao->site, $contactId, $logger);
@@ -75,12 +77,12 @@ class CRM_Nbrmigration_BAO_NbrConsentLink extends CRM_Nbrmigration_DAO_NbrConsen
 
   /**
    * Method to check if pack link already exists
-   * @param string $packId
+   * @param string|NULL $packId
    * @param int $consentActivityId
    * @param int $contactId
    * @return bool
    */
-  public static function isExistingPackLink(string $packId, int $consentActivityId, int $contactId): bool {
+  public static function isExistingPackLink(?string $packId, int $consentActivityId, int $contactId): bool {
     if ($packId && $consentActivityId) {
       try {
         $count = \Civi\Api4\ConsentPackLink::get()

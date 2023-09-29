@@ -21,6 +21,8 @@ function civicrm_api3_nbr_consent_link_Migrate($params) {
   $logger = new CRM_Nihrbackbone_NihrLogger('consent_link_' . $logDate->format('Ymdhis'));
   while ($dao->fetch()) {
     $returnValues[] = CRM_Nbrmigration_BAO_NbrConsentLink::migrate($dao, $logger);
+    $update = "UPDATE civicrm_nbr_consent_link SET processed = TRUE WHERE id = %1";
+    CRM_Core_DAO::executeQuery($update, [1 => [$dao->id, 'Integer']]);
   }
   return civicrm_api3_create_success($returnValues, $params, 'NbrConsentLink', 'Migrate');
 }
