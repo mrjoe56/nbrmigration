@@ -13,45 +13,35 @@ class CRM_Nbrmigration_BAO_NbrConsentLink extends CRM_Nbrmigration_DAO_NbrConsen
    * @throws \Civi\API\Exception\UnauthorizedException
    */
   public static function migrate(CRM_Core_DAO $dao, CRM_Nihrbackbone_NihrLogger $logger): string {
-    Civi::log()->debug("Into function migrate");
     $returnValue = "migrated";
     // find contact with participant id, log error if not found
     $contactId = self::getContactIdWithParticipantId($dao->cih_type_participant_id);
     if ($contactId) {
-      Civi::log()->debug("Contact ID " . $contactId . " found for participant ID " . $dao->cih_type_participant_id);
       // find consent activity, log error if not found
       $consentActivityId = self::findConsentActivityId($dao->consent_version, $dao->consent_date, $contactId, $logger);
       if ($consentActivityId) {
-        Civi::log()->debug("Consent activity ID " . $consentActivityId . " found for contact ID " . $contactId . ", consent version "
-          . $dao->consent_version . " and consent date " . $dao->consent_date);
         if (!self::isExistingPackLink($dao->cih_type_packid, $consentActivityId, $contactId)) {
           CRM_Nbrpanelconsentpack_BAO_ConsentPackLink::createPackLink($consentActivityId, $contactId, $dao->cih_type_packid);
-          Civi::log()->debug("Looks like pack link is created.");
         }
         // find panel/site/centre id, create if not found
         $centrePanelSiteId = self::findPanelSiteCentreId($dao->centre, $dao->panel, $dao->site, $contactId, $logger);
         if ($centrePanelSiteId) {
           if (!self::isExistingPanelLink($centrePanelSiteId, $consentActivityId, $contactId)) {
             CRM_Nbrpanelconsentpack_BAO_ConsentPanelLink::createPanelLink($consentActivityId, $contactId, $centrePanelSiteId);
-            Civi::log()->debug('Looks like panel link was created.');
           }
         }
         else {
-          Civi::log()->debug("Could not find a centre-panel-site ID with centre: " . $dao->centre . ", panel: " . $dao->panel . " and site: " . $dao->site
-            . " for participant " . $dao->cih_type_participant_id);
           $returnValue = "Could not find a centre-panel-site ID with centre: " . $dao->centre . ", panel: " . $dao->panel . " and site: " . $dao->site
             . " for participant " . $dao->cih_type_participant_id;
           $logger->logMessage($returnValue);
         }
       }
       else {
-        Civi::log()->debug("No consent activity found for participant " . $dao->cih_type_participant_id);
         $returnValue = "No consent activity found for participant " . $dao->cih_type_participant_id;
         $logger->logMessage($returnValue);
       }
     }
     else {
-      Civi::log()->debug("No contact ID found for participant " . $dao->cih_type_participant_id);
       $returnValue = "No contact found for participant " . $dao->cih_type_participant_id;
       $logger->logMessage($returnValue);
     }
@@ -100,14 +90,12 @@ class CRM_Nbrmigration_BAO_NbrConsentLink extends CRM_Nbrmigration_DAO_NbrConsen
           ->addWhere('pack_id', '=', $packId)
           ->setCheckPermissions(FALSE)->execute()->count();
         if ($count > 0) {
-          Civi::log()->debug("Pack link found for contact ID " . $contactId . ", pack ID " . $packId . " and consent activity ID " . $consentActivityId);
           return TRUE;
         }
       }
       catch (API_Exception $ex) {
       }
     }
-    Civi::log()->debug("No pack link found for contact ID " . $contactId . ", pack ID " . $packId . " and consent activity ID " . $consentActivityId);
     return FALSE;
   }
 
@@ -130,27 +118,23 @@ class CRM_Nbrmigration_BAO_NbrConsentLink extends CRM_Nbrmigration_DAO_NbrConsen
         ->addWhere('contact_id', '=', $contactId)
         ->setCheckPermissions(FALSE)->execute()->count();
       if ($count > 0) {
-        Civi::log()->debug("Existing panel link found for contact ID ". $contactId . ", consent activity ID " . $consentActivityId
-          . " and centre panel site ID . " . $centrePanelSiteId);
         return TRUE;
       }
     }
-    Civi::log()->debug("No existing panel link found for contact ID ". $contactId . ", consent activity ID " . $consentActivityId
-      . " and centre panel site ID . " . $centrePanelSiteId);
     return FALSE;
   }
 
   /**
    * Method to find centre/panel/site ID with name
    *
-   * @param string $centreName
-   * @param string $panelName
-   * @param string $siteName
+   * @param string|NULL $centreName
+   * @param string|NULL $panelName
+   * @param string|NULL $siteName
    * @param int $contactId
    * @param CRM_Nihrbackbone_NihrLogger $logger
    * @return int|NULL
    */
-  public static function findPanelSiteCentreId(string $centreName, string $panelName, string $siteName, int $contactId, CRM_Nihrbackbone_NihrLogger $logger): ?int {
+  public static function findPanelSiteCentreId(?string $centreName, ?string $panelName, ?string $siteName, int $contactId, CRM_Nihrbackbone_NihrLogger $logger): ?int {
     $centrePanelSiteId = NULL;
     if ($contactId) {
       if (!empty($centreName) || !empty($panelName) || !empty($siteName)) {
@@ -160,51 +144,43 @@ class CRM_Nbrmigration_BAO_NbrConsentLink extends CRM_Nbrmigration_DAO_NbrConsen
         if (!empty($centreName)) {
           $centreId = self::getContactIdWithNameAndType('nbr_centre', $centreName);
           if ($centreId) {
-            Civi::log()->debug("Centre contact ID " . $centreId . " found with name " . $centreName);
             $index++;
             $query .= " AND nvp_centre = %" . $index;
             $queryParams[$index] = [$centreId, "Integer"];
           }
           else {
-            Civi::log()->debug("Could not find a centre contact with name " . $centreName);
             $logger->logMessage("Could not find a centre contact with name " . $centreName);
           }
         }
         if (!empty($panelName)) {
           $panelId = self::getContactIdWithNameAndType('nbr_panel', $panelName);
           if ($panelId) {
-            Civi::log()->debug("Panel contact ID " . $panelId . " found with name " . $panelName);
             $index++;
             $query .= " AND nvp_panel = %" . $index;
             $queryParams[$index] = [$panelId, "Integer"];
           }
           else {
-            Civi::log()->debug("Could not find a panel contact with name " . $panelName);
             $logger->logMessage("Could not find a panel contact with name " . $panelName);
           }
         }
         if (!empty($siteName)) {
           $siteId = self::getContactIdWithNameAndType('nbr_site', $siteName);
           if ($siteId) {
-            Civi::log()->debug("Site contact ID " . $siteId . " found with name " . $siteName);
             $index++;
             $query .= " AND nvp_site = %" . $index;
             $queryParams[$index] = [$siteId, "Integer"];
           }
           else {
-            Civi::log()->debug("Could not find a site contact with name " . $siteName);
             $logger->logMessage("Could not find a site contact with name " . $siteName);
           }
         }
         if ($index > 1) {
           $dao = CRM_Core_DAO::executeQuery($query, $queryParams);
           if ($dao->N > 1) {
-            Civi::log()->debug("More than one center-panel-site record found for contact ID " . $contactId . " with data: " . json_encode($queryParams));
             $logger->logMessage("More than one center-panel-site record found for contact ID " . $contactId . " with data: " . json_encode($queryParams));
           }
           if ($dao->fetch()) {
             $centrePanelSiteId = (int) $dao->id;
-            Civi::log()->debug('centre panel site record ID ' . $centrePanelSiteId . " found");
           }
         }
       }
@@ -250,27 +226,24 @@ class CRM_Nbrmigration_BAO_NbrConsentLink extends CRM_Nbrmigration_DAO_NbrConsen
   public static function findConsentActivityId(string $consentVersion, string $consentDate, int $contactId, CRM_Nihrbackbone_NihrLogger $logger): ?int {
     $consentActivityId = NULL;
     if ($consentDate && $consentVersion) {
-      $targetId = \Civi::service('nbrBackbone')->getTargetRecordTypeId();
       try {
         $activityDate = new DateTime($consentDate);
-        try {
-          $activity = \Civi\Api4\Activity::get()
-            ->addSelect('id')->setCheckPermissions(FALSE)
-            ->addJoin('ActivityContact AS act_contact', 'INNER', ['id', '=', 'act_contact.activity_id'])
-            ->addWhere('nihr_volunteer_consent.nvc_consent_version:name', '=', $consentVersion)
-            ->addWhere('activity_date_time', '=', $activityDate->format("YmdHis"))
-            ->addWhere('is_deleted', '=', FALSE)
-            ->addWhere('is_current_revision', '=', TRUE)
-            ->addWhere('act_contact.record_type_id', '=', \Civi::service('nbrBackbone')->getTargetRecordTypeId())
-            ->addWhere('act_contact.contact_id', '=', $contactId)
-            ->setCheckPermissions(FALSE)->execute()->first();
-          if (isset($activity['id'])) {
-            $consentActivityId = (int) $activity['id'];
-          }
-        }
-        catch (API_Exception $ex) {
-          $logger->logMessage("Error trying to find consent activity for consent version " . $consentVersion
-            . " and consent date " . $consentDate . ", error message from API4 Activity get: " . $ex->getMessage());
+        $query = "SELECT a.id
+            FROM civicrm_activity a
+                JOIN civicrm_activity_contact b ON a.id = b.activity_id
+                JOIN civicrm_value_nihr_volunteer_consent c ON a.id = c.entity_id
+            WHERE b.contact_id = %1 AND b.record_type_id = %2 AND (activity_date_time BETWEEN %3 AND %4) AND c.nvc_consent_version = %5";
+        $queryParams = [
+          1 => [$contactId, 'Integer'],
+          2 => [\Civi::service('nbrBackbone')->getTargetRecordTypeId(), 'Integer'],
+          3 => [$activityDate->format("Y-m-d") . " 00:00:00", "String"],
+          4 => [$activityDate->format("Y-m-d") . " 23:59:59", "String"],
+          5 => [$consentVersion, "String"],
+        ];
+        $consentActivityId = CRM_Core_DAO::singleValueQuery($query, $queryParams);
+        if (!$consentActivityId) {
+          $logger->logMessage("Could not find a consent activity id for contact ID " . $contactId . " and consent version "
+            . $consentVersion . " on consent date " . $consentDate);
         }
       }
       catch (Exception $ex) {
