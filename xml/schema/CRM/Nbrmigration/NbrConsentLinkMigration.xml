@@ -2,16 +2,16 @@
 
 <table>
   <base>CRM/Nbrmigration</base>
-  <class>NbrConsentLink</class>
-  <name>civicrm_nbr_consent_link</name>
-  <comment>FIXME</comment>
-  <log>true</log>
+  <class>NbrConsentLinkMigration</class>
+  <name>civicrm_nbr_consent_link_migration</name>
+  <comment>Migration table for consent links</comment>
+  <log>false</log>
 
   <field>
     <name>id</name>
     <type>int unsigned</type>
     <required>true</required>
-    <comment>Unique NbrConsentLink ID</comment>
+    <comment>Unique NbrConsentLinkMigration ID</comment>
     <html>
       <type>Number</type>
     </html>
@@ -26,6 +26,13 @@
     <type>varchar</type>
     <length>32</length>
     <comment>Particpant ID</comment>
+  </field>
+
+  <field>
+    <name>pack_id_type</name>
+    <type>varchar</type>
+    <length>128</length>
+    <comment>Type of Pack ID</comment>
   </field>
 
   <field>

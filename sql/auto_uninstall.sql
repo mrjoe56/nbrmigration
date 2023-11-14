@@ -17,6 +17,7 @@
 
 SET FOREIGN_KEY_CHECKS=0;
 
+DROP TABLE IF EXISTS `civicrm_nbr_consent_link_migration`;
 DROP TABLE IF EXISTS `civicrm_nbr_consent_link`;
 
 SET FOREIGN_KEY_CHECKS=1;

@@ -1,7 +1,7 @@
 <?php
 use CRM_Nbrmigration_ExtensionUtil as E;
 
-class CRM_Nbrmigration_BAO_NbrConsentLink extends CRM_Nbrmigration_DAO_NbrConsentLink {
+class CRM_Nbrmigration_BAO_NbrConsentLinkMigration extends CRM_Nbrmigration_DAO_NbrConsentLinkMigration {
 
   /**
    * Method to migrate consent pack and panel links
@@ -22,20 +22,15 @@ class CRM_Nbrmigration_BAO_NbrConsentLink extends CRM_Nbrmigration_DAO_NbrConsen
       if ($consentActivityId) {
         if (!self::isExistingPackLink($dao->cih_type_packid, $consentActivityId, $contactId)) {
           if ($dao->cih_type_packid) {
-            CRM_Nbrpanelconsentpack_BAO_ConsentPackLink::createPackLink($consentActivityId, $contactId, $dao->cih_type_packid);
+            CRM_Nbrpanelconsentpack_BAO_ConsentPackLink::createPackLink($consentActivityId, $contactId, $dao->cih_type_packid, "migration");
           }
         }
         // find panel/site/centre id, create if not found
         $centrePanelSiteId = self::findPanelSiteCentreId($dao->centre, $dao->panel, $dao->site, $contactId, $logger);
         if ($centrePanelSiteId) {
           if (!self::isExistingPanelLink($centrePanelSiteId, $consentActivityId, $contactId)) {
-            CRM_Nbrpanelconsentpack_BAO_ConsentPanelLink::createPanelLink($consentActivityId, $contactId, $centrePanelSiteId);
+            CRM_Nbrpanelconsentpack_BAO_ConsentPanelLink::createPanelLink($consentActivityId, $contactId, $centrePanelSiteId, 'migration');
           }
-        }
-        else {
-          $returnValue = "Could not find a centre-panel-site ID with centre: " . $dao->centre . ", panel: " . $dao->panel . " and site: " . $dao->site
-            . " for participant " . $dao->cih_type_participant_id;
-          $logger->logMessage($returnValue);
         }
       }
       else {
@@ -254,5 +249,4 @@ class CRM_Nbrmigration_BAO_NbrConsentLink extends CRM_Nbrmigration_DAO_NbrConsen
     }
     return $consentActivityId;
   }
-
 }

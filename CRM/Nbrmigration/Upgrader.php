@@ -22,6 +22,19 @@ class CRM_Nbrmigration_Upgrader extends CRM_Nbrmigration_Upgrader_Base {
   }
 
   /**
+   * Rename table for nbr consent link -> remove old and create new
+   *
+   * @return TRUE on success
+   * @throws Exception
+   */
+  public function upgrade_1002() {
+    $this->ctx->log->info('Applying update 1002');
+    CRM_Core_DAO::executeQuery("DROP TABLE IF EXISTS civicrm_nbr_consent_link");
+    $this->executeSqlFile('sql/auto_install.sql');
+    return TRUE;
+  }
+
+  /**
    * Example: Run an external SQL script when the module is installed.
    *
   public function install() {

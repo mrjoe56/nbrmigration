@@ -310,5 +310,10 @@ function _nbrmigration_civix_civicrm_entityTypes(&$entityTypes) {
       'class' => 'CRM_Nbrmigration_DAO_NbrConsentLink',
       'table' => 'civicrm_nbr_consent_link',
     ],
+    'CRM_Nbrmigration_DAO_NbrConsentLinkMigration' => [
+      'name' => 'NbrConsentLinkMigration',
+      'class' => 'CRM_Nbrmigration_DAO_NbrConsentLinkMigration',
+      'table' => 'civicrm_nbr_consent_link_migration',
+    ],
   ]);
 }
