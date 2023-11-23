@@ -22,7 +22,7 @@ class CRM_Nbrmigration_BAO_NbrConsentLinkMigration extends CRM_Nbrmigration_DAO_
       if ($consentActivityId) {
         if (!self::isExistingPackLink($dao->cih_type_packid, $consentActivityId, $contactId)) {
           if ($dao->cih_type_packid) {
-            CRM_Nbrpanelconsentpack_BAO_ConsentPackLink::createPackLink($consentActivityId, $contactId, $dao->cih_type_packid, "migration");
+            CRM_Nbrpanelconsentpack_BAO_ConsentPackLink::createPackLink($consentActivityId, $contactId, $dao->cih_type_packid, $dao->pack_id_type,  "migration");
           }
         }
         // find panel/site/centre id, create if not found
@@ -83,7 +83,7 @@ class CRM_Nbrmigration_BAO_NbrConsentLinkMigration extends CRM_Nbrmigration_DAO_
         $count = \Civi\Api4\ConsentPackLink::get()
           ->addSelect('id')
           ->addWhere('activity_id', '=', $consentActivityId)
-          ->addWhere('contactId', '=', $contactId)
+          ->addWhere('contact_id', '=', $contactId)
           ->addWhere('pack_id', '=', $packId)
           ->setCheckPermissions(FALSE)->execute()->count();
         if ($count > 0) {
@@ -229,7 +229,7 @@ class CRM_Nbrmigration_BAO_NbrConsentLinkMigration extends CRM_Nbrmigration_DAO_
             FROM civicrm_activity a
                 JOIN civicrm_activity_contact b ON a.id = b.activity_id
                 JOIN civicrm_value_nihr_volunteer_consent c ON a.id = c.entity_id
-            WHERE b.contact_id = %1 AND b.record_type_id = %2 AND (activity_date_time BETWEEN %3 AND %4) AND c.nvc_consent_version = %5";
+            WHERE b.contact_id = %1 AND b.record_type_id = %2 AND (activity_date_time BETWEEN %3 AND %4) AND c.nvc_consent_version = %5 ORDER BY id DESC LIMIT 1";
         $queryParams = [
           1 => [$contactId, 'Integer'],
           2 => [\Civi::service('nbrBackbone')->getTargetRecordTypeId(), 'Integer'],

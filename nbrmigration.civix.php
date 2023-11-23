@@ -305,11 +305,6 @@ function _nbrmigration_civix_fixNavigationMenuItems(&$nodes, &$maxNavID, $parent
  */
 function _nbrmigration_civix_civicrm_entityTypes(&$entityTypes) {
   $entityTypes = array_merge($entityTypes, [
-    'CRM_Nbrmigration_DAO_NbrConsentLink' => [
-      'name' => 'NbrConsentLink',
-      'class' => 'CRM_Nbrmigration_DAO_NbrConsentLink',
-      'table' => 'civicrm_nbr_consent_link',
-    ],
     'CRM_Nbrmigration_DAO_NbrConsentLinkMigration' => [
       'name' => 'NbrConsentLinkMigration',
       'class' => 'CRM_Nbrmigration_DAO_NbrConsentLinkMigration',
