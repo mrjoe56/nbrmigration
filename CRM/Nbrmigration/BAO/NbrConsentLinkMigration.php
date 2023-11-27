@@ -32,6 +32,9 @@ class CRM_Nbrmigration_BAO_NbrConsentLinkMigration extends CRM_Nbrmigration_DAO_
             CRM_Nbrpanelconsentpack_BAO_ConsentPanelLink::createPanelLink($consentActivityId, $contactId, $centrePanelSiteId, 'migration');
           }
         }
+        else {
+          $returnValue = "No centre/panel/site found for participant " . $dao->cih_type_participant_id;
+        }
       }
       else {
         $returnValue = "No consent activity found for participant " . $dao->cih_type_participant_id;
@@ -138,39 +141,9 @@ class CRM_Nbrmigration_BAO_NbrConsentLinkMigration extends CRM_Nbrmigration_DAO_
         $query = "SELECT id FROM civicrm_value_nihr_volunteer_panel WHERE entity_id = %1";
         $queryParams = [1 =>[$contactId, "Integer"]];
         $index = 1;
-        if (!empty($centreName)) {
-          $centreId = self::getContactIdWithNameAndType('nbr_centre', $centreName);
-          if ($centreId) {
-            $index++;
-            $query .= " AND nvp_centre = %" . $index;
-            $queryParams[$index] = [$centreId, "Integer"];
-          }
-          else {
-            $logger->logMessage("Could not find a centre contact with name " . $centreName);
-          }
-        }
-        if (!empty($panelName)) {
-          $panelId = self::getContactIdWithNameAndType('nbr_panel', $panelName);
-          if ($panelId) {
-            $index++;
-            $query .= " AND nvp_panel = %" . $index;
-            $queryParams[$index] = [$panelId, "Integer"];
-          }
-          else {
-            $logger->logMessage("Could not find a panel contact with name " . $panelName);
-          }
-        }
-        if (!empty($siteName)) {
-          $siteId = self::getContactIdWithNameAndType('nbr_site', $siteName);
-          if ($siteId) {
-            $index++;
-            $query .= " AND nvp_site = %" . $index;
-            $queryParams[$index] = [$siteId, "Integer"];
-          }
-          else {
-            $logger->logMessage("Could not find a site contact with name " . $siteName);
-          }
-        }
+        self::addWhere('nbr_centre', 'nvp_centre', $centreName, $query, $queryParams, $index);
+        self::addWhere('nbr_panel', 'nvp_panel', $panelName, $query, $queryParams, $index);
+        self::addWhere('nbr_site', 'nvp_site', $siteName, $query, $queryParams, $index);
         if ($index > 1) {
           $dao = CRM_Core_DAO::executeQuery($query, $queryParams);
           if ($dao->N > 1) {
@@ -184,6 +157,31 @@ class CRM_Nbrmigration_BAO_NbrConsentLinkMigration extends CRM_Nbrmigration_DAO_
     }
     return $centrePanelSiteId;
   }
+
+  /**
+   * Method to add where for centre / panel / site
+   *
+   * @param string $getContactType
+   * @param string $whereContactType
+   * @param string $contactName
+   * @param string $query
+   * @param array $queryParams
+   * @param int $index
+   * @return void
+   */
+  private static function addWhere(string $getContactType, string $whereContactType, string $contactName, string &$query, array &$queryParams, int &$index): void {
+    $where = " AND " . $whereContactType . " IS NULL";
+    if (!empty($contactName)) {
+      $contactId = self::getContactIdWithNameAndType($getContactType, $contactName);
+      if ($contactId) {
+        $index++;
+        $where = " AND " . $whereContactType . " = %" . $index;
+        $queryParams[$index] = [$contactId, "Integer"];
+      }
+    }
+    $query .= $where;
+  }
+
 
   /**
    * Method to get contact ID of centre-panel-site with name
