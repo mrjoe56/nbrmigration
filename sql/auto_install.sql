@@ -30,6 +30,7 @@
 
 SET FOREIGN_KEY_CHECKS=0;
 
+DROP TABLE IF EXISTS `civicrm_nbr_consent_link_migration`;
 DROP TABLE IF EXISTS `civicrm_nbr_consent_link`;
 
 SET FOREIGN_KEY_CHECKS=1;
@@ -51,6 +52,33 @@ CREATE TABLE `civicrm_nbr_consent_link` (
 
      `id` int unsigned NOT NULL AUTO_INCREMENT  COMMENT 'Unique NbrConsentLink ID',
      `cih_type_participant_id` varchar(32)    COMMENT 'Particpant ID',
+     `cih_type_packid` varchar(32)    COMMENT 'Pack ID',
+     `consent_version` varchar(128)    COMMENT 'Pack ID',
+     `consent_date` varchar(10)    COMMENT 'Pack ID',
+     `panel` varchar(64)    COMMENT 'Panel',
+     `site` varchar(64)    COMMENT 'Site',
+     `centre` varchar(64)    COMMENT 'Centre',
+     `processed` tinyint   DEFAULT FALSE COMMENT 'Processed' 
+,
+        PRIMARY KEY (`id`)
+ 
+ 
+ 
+)  ENGINE=InnoDB  ;
+
+-- /*******************************************************
+-- *
+-- * civicrm_nbr_consent_link_migration
+-- *
+-- * Migration table for consent links
+-- *
+-- *******************************************************/
+CREATE TABLE `civicrm_nbr_consent_link_migration` (
+
+
+     `id` int unsigned NOT NULL AUTO_INCREMENT  COMMENT 'Unique NbrConsentLinkMigration ID',
+     `cih_type_participant_id` varchar(32)    COMMENT 'Particpant ID',
+     `pack_id_type` varchar(128)    COMMENT 'Type of Pack ID',
      `cih_type_packid` varchar(32)    COMMENT 'Pack ID',
      `consent_version` varchar(128)    COMMENT 'Pack ID',
      `consent_date` varchar(10)    COMMENT 'Pack ID',
