@@ -163,13 +163,13 @@ class CRM_Nbrmigration_BAO_NbrConsentLinkMigration extends CRM_Nbrmigration_DAO_
    *
    * @param string $getContactType
    * @param string $whereContactType
-   * @param string $contactName
+   * @param string|NULL $contactName
    * @param string $query
    * @param array $queryParams
    * @param int $index
    * @return void
    */
-  private static function addWhere(string $getContactType, string $whereContactType, string $contactName, string &$query, array &$queryParams, int &$index): void {
+  private static function addWhere(string $getContactType, string $whereContactType, ?string $contactName, string &$query, array &$queryParams, int &$index): void {
     $where = " AND " . $whereContactType . " IS NULL";
     if (!empty($contactName)) {
       $contactId = self::getContactIdWithNameAndType($getContactType, $contactName);
