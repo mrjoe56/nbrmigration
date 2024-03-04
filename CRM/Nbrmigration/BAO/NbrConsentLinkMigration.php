@@ -16,9 +16,11 @@ class CRM_Nbrmigration_BAO_NbrConsentLinkMigration extends CRM_Nbrmigration_DAO_
     $returnValue = "migrated";
     // find contact with participant id, log error if not found
     $contactId = self::getContactIdWithParticipantId($dao->cih_type_participant_id);
+    Civi::log()->debug("Contact ID " . $contactId . " found with participant ID " . $dao->cih_type_participant_id);
     if ($contactId) {
       // find consent activity, log error if not found
       $consentActivityId = self::findConsentActivityId($dao->consent_version, $dao->consent_date, $contactId, $logger);
+      Civi::log()->debug("Consent Activity ID " . $consentActivityId . " found with consent version " . $dao->consent_version . " and consent date " . $dao->consent_date);
       if ($consentActivityId) {
         if (!self::isExistingPackLink($dao->cih_type_packid, $consentActivityId, $contactId)) {
           if ($dao->cih_type_packid) {
@@ -34,15 +36,18 @@ class CRM_Nbrmigration_BAO_NbrConsentLinkMigration extends CRM_Nbrmigration_DAO_
         }
         else {
           $returnValue = "No centre/panel/site found for participant " . $dao->cih_type_participant_id;
+          Civi::log()->debug("No centre/panel/site found for participant " . $dao->cih_type_participant_id);
         }
       }
       else {
         $returnValue = "No consent activity found for participant " . $dao->cih_type_participant_id;
         $logger->logMessage($returnValue);
+        Civi::log()->debug("No activity found for participant " . $dao->cih_type_participant_id);
       }
     }
     else {
       $returnValue = "No contact found for participant " . $dao->cih_type_participant_id;
+      Civi::log()->debug("No contact found for participant " . $dao->cih_type_participant_id);
       $logger->logMessage($returnValue);
     }
     return $returnValue;
@@ -90,6 +95,7 @@ class CRM_Nbrmigration_BAO_NbrConsentLinkMigration extends CRM_Nbrmigration_DAO_
           ->addWhere('pack_id', '=', $packId)
           ->setCheckPermissions(FALSE)->execute()->count();
         if ($count > 0) {
+          Civi::log()->debug("Link Pack ID " . $packId . " and consent activity ID " . $consentActivityId . " already exists");
           return TRUE;
         }
       }
@@ -118,6 +124,8 @@ class CRM_Nbrmigration_BAO_NbrConsentLinkMigration extends CRM_Nbrmigration_DAO_
         ->addWhere('contact_id', '=', $contactId)
         ->setCheckPermissions(FALSE)->execute()->count();
       if ($count > 0) {
+        Civi::log()->debug("Link found between Consent Activity ID " . $consentActivityId . " and Centre/Panel/Site ID "
+          . $centrePanelSiteId . " for Contact ID " . $contactId);
         return TRUE;
       }
     }
@@ -148,9 +156,13 @@ class CRM_Nbrmigration_BAO_NbrConsentLinkMigration extends CRM_Nbrmigration_DAO_
           $dao = CRM_Core_DAO::executeQuery($query, $queryParams);
           if ($dao->N > 1) {
             $logger->logMessage("More than one center-panel-site record found for contact ID " . $contactId . " with data: " . json_encode($queryParams));
+            Civi::log()->debug("More than one center-panel-site record found for contact ID " . $contactId . " with centre: " . $centreName
+              . ", site " . $siteName . " and panel " . $panelName);
           }
           if ($dao->fetch()) {
             $centrePanelSiteId = (int) $dao->id;
+            Civi::log()->debug("Centre/Site/Panel ID " . $centrePanelSiteId . " found for centre: " . $centreName
+              . ", site " . $siteName . " and panel " . $panelName);
           }
         }
       }
